@@ -1,0 +1,136 @@
+---
+title: "Linear Regression Coding Assignment-3"
+editor_options:
+  chunk_output_type: console
+output:
+  html_document:
+    df_print: paged
+---
+```{r}
+library(ggplot2)
+library(dplyr)
+library(reshape)
+```
+
+```{r}
+# Load the diabetes dataset: 
+# 10 predictors which are age, gender (1-female, 2-male), body-mass index, average blood pressure, and six blood serum measurements and 1 response variable which is a quantitative measure of disease progression one year after baseline)
+df = read.csv('Data/diabetes.csv', header = TRUE, stringsAsFactors = FALSE)
+str(df)
+```
+
+```{r}
+# Create a new feature called BMILEVEL using the BMI column and the following rules: BMI < 18.5 is underweight, 18.5 <= BMI <= 24.9 is healthy, 25 <= BMI <= 29.9 is overweight, BMI >= 30 is unhealthy
+df = df %>% mutate(BMILEVEL = case_when(BMI < 18.5 ~ 'underweight', BMI >= 18.5 & BMI <= 24.9 ~ 'healthy', BMI >= 18.5 & BMI <= 24.9 ~ 'overweight' ,BMI >= 30 ~ 'unhealthy'))
+str(df)
+```
+
+
+```{r}
+# Convert 'GENDER' and 'BMILEVEL' columns to factors
+categorical_cols = c('GENDER', 'BMILEVEL')
+df[categorical_cols] = lapply(df[categorical_cols], as.factor)
+str(df)
+```
+
+```{r}
+# Create a list of continuous columns
+continuous_cols = setdiff(colnames(df), categorical_cols)
+continuous_cols
+```
+
+```{r}
+# How many levels does the categorical variable *BMILEVEL* have? What is the reference level? 
+# Check the levels of the 'BMILEVEL' variable
+levels_bmilevel <- levels(df$BMILEVEL)
+
+# Number of levels
+num_levels_bmilevel <- length(levels_bmilevel)
+
+# Display the number of levels and the levels themselves
+cat("Number of levels in BMILEVEL:", num_levels_bmilevel, "\n")
+cat("Levels in BMILEVEL:", levels_bmilevel, "\n")
+
+# Identify the reference level (usually the first level)
+
+cat("Reference level in BMILEVEL:", levels_bmilevel[1], "\n")
+
+
+```
+
+```{r}
+# Fit a linear model for predicting disease progression using BMILEVEL. Print the model's summary.
+# How accurate is the model?
+# Which level in BMILEVEL is most likely to not have a linear relationship with disease progression? What is the reason?
+# How worse is the disease progression in unhealthy people compared to the healthy ones?
+# How worse is the disease progression in unhealthy people compared to the overweight ones?
+# Write down the individual model for each level in BMILEVEL
+
+linear_model = lm(data = df, Y ~ BMILEVEL)
+summary(linear_model)
+
+# the model is not that accurate because r squared value is less
+# BMI level underweight as the p value is very high
+
+#>The difference in coefficients of unhealthy people compared to the overweight ones indicates that disease progression is significantly worse in unhealthy people compared to overweight ones.
+
+
+
+
+```
+
+```{r}
+# Fit a linear model for predicting disease progression using BMILEVEL and the blood serum measurements. 
+# From the model summary, explain how you will find out which blood serum measurements are most likely to have a linear relationship with disease progression.
+# Fit a model using BMILEVEL and the blood serum measurements identified in the previous question and compare its accuracy with the model fit using BMILEVEL and all blood serum measurements.
+
+linear_model_all_serums <- lm(Y ~ BMILEVEL + S1 + S2 + S3 + S4 + S5 + S6, data = df)
+
+# Print the model summary
+summary(linear_model_all_serums)
+
+# blood serum measurements are most likely to have a linear relationship with disease progression for which the p values are very less
+
+linear_model_all_serums <- lm(Y ~ BMILEVEL +S1+ S5 + S6, data = df)
+
+# Print the model summary
+summary(linear_model_all_serums)
+# the r squared value for both adjusted and multiple decreases which indicates the accuracy of model is less than the previous model
+
+```
+
+```{r}
+# Fit a linear model for predicting disease progression using BMI, age, BP, and gender. How accurate is the model? 
+# According to the model, which gender has a worse disease progression? Explain why.
+# For the same age, BP, and gender, decreasing BMI by 1 unit causes what change in the disease progression?
+# For the same age and BP, which gender benefits better w.r.t. disease progressions by decreasing BMI by 1 unit. Explain.
+linear_model = lm(Y ~ BMI + AGE + BP + GENDER , data = df)
+summary(linear_model)
+# the model is 47 to 48% accurate
+# Gender 2 has has a worse disease progression because of high p value
+
+coefficients <- coef(linear_model)
+
+# Find the coefficient for BMI
+coeff_bmi <- coefficients["BMI"]
+
+# Interpretation: A 1-unit decrease in BMI is associated with a change in disease progression
+# equal to the coefficient for BMI, while holding age, BP, and gender constant.
+change_in_disease_progression <- coeff_bmi
+change_in_disease_progression
+
+
+```
+
+
+```{r}
+# Fit a linear model for predicting disease progression using BMI, age, BP, gender and interaction between BMI and gender. Is this model more accurate than the model without interaction between BMI and gender?
+model = lm(data = df, Y ~ BMI + AGE + BP + GENDER + BMI:GENDER)
+summary(model)
+#there is significant change in the accuracy for a linear model without interaction between BMI and Gender
+```
+
+
+
+
+
